@@ -12,14 +12,13 @@ You need to do the following things:
 - **Understand the codebase**: Explore and understand the codebase provided, in particular using the simulator, teleoperation scripts and data logging capabilities provided.
 - **Calibrate your simulator** so that it matches your robot. We provide a crude robot dynamics model, but you need to tune the parameters to make it closer to the real robot. If you like, you can also replace the dynamics model with something more sophisticated, by drawing on the workshop theory.
   - You should use the logging capabilities in the repository to log both the robot and simulator state data. Plotting these on the same chart will assist with calibration.
-- **Implement a PD controller** to move the robot to a specific target location. Tune the controller to get a good response.
+- **Implement a PID controller** to move the robot to a specific target location. Tune the controller to get a good response.
   
 Submission requirements:
 -
 - Use the provided logging functions to save data. Combine both your simulated and real robot data into a csv file `Lab1.csv` containing robot/sim state information over 100 time steps as you command the robot to move to the point (0.5m,0.5m) relative to the starting location of the robot.
 - For this lab, you will be evaluated on the final positioning accuracy of the robot (important for the real world demo), and how closely the simulator states match the real robot recordings.
 
-The unit test in `tests/test_automark_metrics.py` (`test_lab1_automark_metrics_from_log`) can be used to read your CSV file and test whether your output file meets our submission standards. Run this using the command `pytest tests/test_automark_metrics.py::test_lab1_automark_metrics_from_log -v -s`
 
 The automarker reads a CSV log from `logs/lab1.csv`.
 
@@ -35,7 +34,7 @@ The automarker reads a CSV log from `logs/lab1.csv`.
 ### Evaluated metrics and pass thresholds
 
 | Metric | Default threshold |
-| --- | --- | --- |
+| --- | --- |
 | Final distance to target (real) | ≤ 0.10 m | 
 | Sim-vs-real trajectory RMSE | ≤ 0.20 m | 
 | Final distance to target (sim) | ≤ 0.10 m |

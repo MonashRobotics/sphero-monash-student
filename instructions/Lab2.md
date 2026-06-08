@@ -8,38 +8,19 @@ measurement — a pseudo-lidar reading without any extra sensor hardware.
 
 ## Key learning outcomes
 
-- Implement an EKF that fuses **odometry** (process model) with **range-to-wall** measurements (measurement model) in a known occupancy map.
+- Implement an EKF that fuses **odometry** (process model) with **range-to-wall** measurements (measurement model) in a known occupancy map (see below for an example).
 - Understand how restricting motion to cardinal directions turns collision events into informative pseudo-lidar observations.
 - Evaluate how measurement quality and process noise tuning affect localisation accuracy.
 - Experience simulator-to-real transfer for a contact-based localisation system.
 
 ## What you need to do
 
-- **Teleop the robot** using arrow keys or WASD — the robot is restricted to N/E/S/W headings only.
+- **Teleop the robot** using arrow keys or WASD, use a controller to restrict the robot to N/E/S/W headings only.
 - **Use your robot motion model** from Lab 1 as the process model for odometry prediction.
 - **Implement the range measurement model** `h(x)`: given the EKF state `[x, y, heading, speed]` and the known occupancy map, ray-cast to find the expected distance to the nearest wall in the current heading direction.
 - **Fuse range measurements** into the EKF whenever the robot collides with a wall: the measured range is the distance traveled since the last heading change.
 - **Tune `Q` (process noise) and `R_range` (range noise variance)** so that the EKF estimate converges and tracks ground truth well.
 - **Calibrate** the simulator dynamics and noise parameters against the real robot.
-
-## How a range measurement is generated
-
-```
-                 EKF state x = [x, y, heading, speed]
-                        │
-                 ray_cast(known_map, x, y, heading)
-                        │
-               h(x) = expected distance to wall
-```
-
-When the robot hits a wall:
-
-```
-z_measured = ‖odom_position_now − odom_position_at_last_heading_change‖
-```
-
-The EKF update compares `z_measured` with `h(x)` (scalar innovation) to correct
-the position estimate.
 
 ## Controls
 
@@ -70,8 +51,7 @@ python labs/Lab2.py
 
 ## Automark assessment
 
-The automarker reads a CSV log from `logs/lab2.csv` (override with the `LAB2_LOG` environment variable).  
-See `tests/test_automark_metrics.py` (`test_lab2_automark_metrics_from_log`) for the full evaluation logic.
+The automarker reads a CSV log from `logs/lab2.csv`.
 
 ### Required CSV columns
 
@@ -89,11 +69,10 @@ See `tests/test_automark_metrics.py` (`test_lab2_automark_metrics_from_log`) for
 
 ### Evaluated metrics and pass thresholds
 
-| Metric | Default threshold | Override env variable |
+| Metric | Default threshold |
 | --- | --- | --- |
-| Mean Mahalanobis distance of position error (`sim - real`) | ≤ 4.0 | `LAB2_MAX_MEAN_MAHALANOBIS` |
-| Chi-square pass rate (2 DoF, 95 % gate) | ≥ 0.90 | `LAB2_MIN_CHI_SQUARE_PASS_RATE` |
-| Posterior covariance validity (symmetric positive semidefinite) | all eigenvalues ≥ −1 × 10⁻¹⁰ | — |
+| Mean Mahalanobis distance of position error (`sim - real`) | ≤ 4.0 | 
+| Chi-square pass rate (2 DoF, 95 % gate) | ≥ 0.90 | 
 
 ## Setting yourself up for Lab 3
 
