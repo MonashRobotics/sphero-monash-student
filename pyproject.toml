@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sphero_monash"
+version = "0.1.0"
+description = "Sphero robot gym-like environment for intelligent robotics teaching. To be used alongside Sphero unsw."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }  
+
+authors = [
+  { name = "Michael Burke", email = "michael.g.burke@monash.edu" }
+]
+
+dependencies = [
+  "numpy",
+  "pygame",
+  "gymnasium>=0.29",
+]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Education",
+  "Topic :: Scientific/Engineering :: Intelligent Robotics",
+]
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

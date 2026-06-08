@@ -1,0 +1,11 @@
+gymnasium>=0.29
+numpy
+pygame
+jupyter
+torch
+matplotlib
+tensorboard>=2.20.0
+setuptools==81.0.0
+sphero-unsw==0.1.11
+pandas
+pytest
