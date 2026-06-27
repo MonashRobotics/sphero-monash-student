@@ -75,23 +75,7 @@ The main fields are:
 | `velocity`        |               cm/s | Latest velocity vector from the motor encoders. `x` is right/left velocity and `y` is forward/back velocity.                           |
 | `speed_cmd`       |                m/s | Speed command sent through the environment action interface. This is converted internally to the Sphero speed scale.                   |
 | `heading_cmd`     |            radians | Heading command sent through the environment action interface. This is converted internally to degrees for the Sphero API.             |
-| `setpoint_xy`     |           `[m, m]` | Current target/setpoint position used for logging and visualisation.                                                                   |
-
-The observation vector has the form:
-
-```python
-obs = [x, y, heading, speed, collision_flag]
-```
-
-with units:
-
-```text
-x: metres
-y: metres
-heading: radians
-speed: metres/second
-collision_flag: 0.0 or 1.0
-```
+| `setpoint_xy`     |           `[m, m]` | Current target/setpoint position used for logging and visualisation.                                 
 
 Example:
 
