@@ -175,7 +175,8 @@ def main(sim_only=False):
 
             # Control robot directly (if connected)
             if robot_env is not None:
-                robot_env.step(action)
+                obs, _, terminated, truncated, info = robot_env.step(action)
+                # print(f"Robot state: {info['state_odom']}, Collision: {info['collision']}, Acceleration: {info['acceleration']}, Orientation: {info['orientation']}, Gyro: {info['gyroscope']}, Velocity: {info['velocity']}")
 
             # Step simulator directly and update its logging/visualization state.
             _, _, terminated, truncated, _ = env.step(action)

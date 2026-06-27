@@ -89,8 +89,23 @@ class Robot(gym.Env):
         self.latest_est_mean: Optional[np.ndarray] = None
         self.latest_est_cov: Optional[np.ndarray] = None
 
-        # For real robot, we don't have true ground truth, so no collision flag
+        # Software collision sensing state. This feeds obs[4] and info["collision"].
         self.last_collision_flag: float = 0.0
+        self._last_accel_mag: Optional[float] = None
+        self._last_speed_cm_s: Optional[float] = None
+        self._last_gyro_mag: Optional[float] = None
+        self._last_collision_time: float = 0.0
+        self._last_collision_debug: Dict[str, float] = {}
+
+        # Collision thresholds. Tune these after printing collision_debug values
+        # while driving into a wall/object a few times.
+        self.collision_dead_time: float = 0.25
+        self.collision_accel_threshold: float = 1.5
+        self.collision_jerk_threshold: float = 0.8
+        self.collision_speed_drop_threshold: float = 10.0
+        self.stationary_collision_jerk_threshold: float = 1.2
+        self.collision_gyro_spike_threshold: float = 100.0
+        self.collision_gyro_mag_threshold: float = 200.0
 
         # Goal
         self.goal_pos = np.array(goal_pos, dtype=np.float32)
@@ -215,6 +230,11 @@ class Robot(gym.Env):
         speed0 = 0.0
 
         self.last_collision_flag = 0.0
+        self._last_accel_mag = None
+        self._last_speed_cm_s = None
+        self._last_gyro_mag = None
+        self._last_collision_time = 0.0
+        self._last_collision_debug = {}
 
         # Initialize state
         self.state_odom = np.array([x0, y0, heading0, speed0], dtype=np.float32)
@@ -256,6 +276,98 @@ class Robot(gym.Env):
         }
 
         return obs, info
+
+    def _sense_collision(self) -> bool:
+        """
+        Detect collisions from live Sphero sensor readings.
+
+        Uses acceleration jerk, velocity drop, and gyroscope spikes. Updates
+        self.last_collision_flag before _get_observation() is called so obs[4]
+        reflects the current step's collision state.
+        """
+        acceleration = self.api.get_acceleration()
+        velocity = self.api.get_velocity()
+        gyroscope = self.api.get_gyroscope()
+
+        if acceleration is None or velocity is None or gyroscope is None:
+            self.last_collision_flag = 0.0
+            self._last_collision_debug = {}
+            return False
+
+        ax = float(acceleration.get("x", 0.0))
+        ay = float(acceleration.get("y", 0.0))
+        az = float(acceleration.get("z", 0.0))
+        accel_mag = float(np.sqrt(ax * ax + ay * ay + az * az))
+
+        vx = float(velocity.get("x", 0.0))
+        vy = float(velocity.get("y", 0.0))
+        speed_cm_s = float(np.sqrt(vx * vx + vy * vy))
+
+        gx = float(gyroscope.get("x", gyroscope.get("pitch", 0.0)))
+        gy = float(gyroscope.get("y", gyroscope.get("roll", 0.0)))
+        gz = float(gyroscope.get("z", gyroscope.get("yaw", 0.0)))
+        gyro_mag = float(np.sqrt(gx * gx + gy * gy + gz * gz))
+
+        if self._last_accel_mag is None:
+            self._last_accel_mag = accel_mag
+            self._last_speed_cm_s = speed_cm_s
+            self._last_gyro_mag = gyro_mag
+            self.last_collision_flag = 0.0
+            self._last_collision_debug = {
+                "accel_mag": accel_mag,
+                "accel_jerk": 0.0,
+                "speed_cm_s": speed_cm_s,
+                "speed_drop_cm_s": 0.0,
+                "gyro_mag": gyro_mag,
+                "gyro_spike": 0.0,
+            }
+            return False
+
+        accel_jerk = abs(accel_mag - float(self._last_accel_mag))
+        speed_drop = float(self._last_speed_cm_s) - speed_cm_s
+        gyro_spike = abs(gyro_mag - float(self._last_gyro_mag))
+        now = time.time()
+
+        moving_collision = (
+            accel_jerk > self.collision_jerk_threshold
+            and accel_mag > self.collision_accel_threshold
+            and speed_drop > self.collision_speed_drop_threshold
+        )
+        stationary_impact = (
+            speed_cm_s < 5.0
+            and accel_jerk > self.stationary_collision_jerk_threshold
+        )
+        rotation_collision = (
+            gyro_spike > self.collision_gyro_spike_threshold
+            and gyro_mag > self.collision_gyro_mag_threshold
+            and accel_mag > 1.2
+        )
+
+        collision = bool(
+            (moving_collision or stationary_impact or rotation_collision)
+            and (now - self._last_collision_time > self.collision_dead_time)
+        )
+
+        self._last_accel_mag = accel_mag
+        self._last_speed_cm_s = speed_cm_s
+        self._last_gyro_mag = gyro_mag
+
+        self._last_collision_debug = {
+            "accel_mag": accel_mag,
+            "accel_jerk": accel_jerk,
+            "speed_cm_s": speed_cm_s,
+            "speed_drop_cm_s": speed_drop,
+            "gyro_mag": gyro_mag,
+            "gyro_spike": gyro_spike,
+        }
+
+        if collision:
+            self._last_collision_time = now
+            self.last_collision_flag = 1.0
+            return True
+
+        self.last_collision_flag = 0.0
+        return False
 
     def step(self, action: np.ndarray):
         """Execute one step with the real robot.
@@ -303,6 +415,8 @@ class Robot(gym.Env):
         self.state_odom = np.array([x_new, y_new, heading, speed], dtype=np.float32)
         self.state_true = self.state_odom.copy()
 
+        collision_detected = self._sense_collision()
+
         self.step_count += 1
 
         terminated = False
@@ -314,7 +428,13 @@ class Robot(gym.Env):
         info: Dict[str, Any] = {
             "state_true": self.state_true.copy(),
             "state_odom": self.state_odom.copy(),
-            "collision": False,
+            "collision": collision_detected,
+            "collision_flag": self.last_collision_flag,
+            "collision_debug": self._last_collision_debug.copy(),
+            "acceleration": self.api.get_acceleration(),
+            "gyroscope": self.api.get_gyroscope(),
+            "orientation": self.api.get_orientation(),
+            "velocity": self.api.get_velocity(),
             "speed_cmd": speed_cmd,
             "heading_cmd": heading_cmd,
             "setpoint_xy": self.current_setpoint.copy(),
