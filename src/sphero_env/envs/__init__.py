@@ -13,6 +13,7 @@ Usage:
 
 from sphero_env.envs.sphero_env import SpheroEnv
 from sphero_env.envs.visualiser import Visualiser, LabVisualiser
+from sphero_env.envs.maze_generator import grid_to_world, MazeGenerator
 
 # Optional: provide a helper registration function
 import gymnasium as gym
@@ -27,4 +28,4 @@ def register_env():
 # Automatically register on import if you like:
 register_env()
 
-__all__ = ["SpheroEnv", "Visualiser", "LabVisualiser", "register_env"]
+__all__ = ["SpheroEnv", "Visualiser", "LabVisualiser", "MazeGenerator", "grid_to_world", "register_env"]
