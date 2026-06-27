@@ -52,6 +52,74 @@ observation = [
 |   `3` | `speed_meas`     | Measured speed         |
 |   `4` | `collision_flag` | Collision indicator    |
 
+### Robot `info` dictionary
+
+Each call to `robot.step(action)` returns an `info` dictionary with extra diagnostic details from the real Sphero robot.
+
+```python
+obs, reward, terminated, truncated, info = robot.step(action)
+```
+
+The main fields are:
+
+| Field             |              Units | Description                                                                                                                            |
+| ----------------- | -----------------: | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `state_true`      | `[m, m, rad, -]` | Current robot state `[x, y, heading, speed]`. For the real robot this is the same as odometry.                                         |
+| `state_odom`      | `[m, m, rad, -]` | Odometry-based robot state `[x, y, heading, speed]`. Location from the Sphero API is converted from centimetres to metres.             |
+| `collision`       |            boolean | Whether a collision was detected on this step.                                                                                         |
+| `collision_flag`  |     `0.0` or `1.0` | Numeric collision flag. This is also included as the final observation value, `obs[4]`.                                                |
+| `collision_debug` |              mixed | Extra values used by the software collision detector, useful for threshold tuning. See below for units.                                |
+| `acceleration`    |                `g` | Latest acceleration vector from the Sphero accelerometer. `1 g = 9.80665 m/s²`; each axis is approximately in the range `-8` to `8 g`. |
+| `orientation`     |            degrees | Latest robot orientation/attitude. `pitch` and `yaw` are approximately `-180°` to `180°`; `roll` is approximately `-90°` to `90°`.     |
+| `gyro`            |          degrees/s | Latest gyroscope rate reading. Axes are approximately in the range `-2000°/s` to `2000°/s`.                                            |
+| `velocity`        |               cm/s | Latest velocity vector from the motor encoders. `x` is right/left velocity and `y` is forward/back velocity.                           |
+| `speed_cmd`       |                m/s | Speed command sent through the environment action interface. This is converted internally to the Sphero speed scale.                   |
+| `heading_cmd`     |            radians | Heading command sent through the environment action interface. This is converted internally to degrees for the Sphero API.             |
+| `setpoint_xy`     |           `[m, m]` | Current target/setpoint position used for logging and visualisation.                                                                   |
+
+The observation vector has the form:
+
+```python
+obs = [x, y, heading, speed, collision_flag]
+```
+
+with units:
+
+```text
+x: metres
+y: metres
+heading: radians
+speed: metres/second
+collision_flag: 0.0 or 1.0
+```
+
+Example:
+
+```python
+obs, reward, terminated, truncated, info = robot.step(action)
+
+if info["collision"]:
+    print("Collision detected")
+    print(info["collision_debug"])
+```
+
+The collision detector is software-based. It uses changes in acceleration, drops in velocity, and gyroscope spikes to estimate when the Sphero has hit an obstacle.
+
+`collision_debug` contains values such as:
+
+| Debug value          |                Units | Description                                                           |
+| -------------------- | -------------------: | --------------------------------------------------------------------- |
+| `accel_mag`          |                  `g` | Magnitude of the acceleration vector.                                 |
+| `accel_jerk`         |           `g / step` | Change in acceleration magnitude since the previous control step.     |
+| `speed_cm_s`         |               `cm/s` | Magnitude of the Sphero velocity vector.                              |
+| `speed_drop`         |      `cm/s per step` | Drop in speed since the previous control step.                        |
+| `gyro_mag`           |          `degrees/s` | Magnitude of the gyroscope rate vector.                               |
+| `gyro_spike`         | `degrees/s per step` | Change in gyroscope magnitude since the previous control step.        |
+| `moving_collision`   |              boolean | Collision condition based on acceleration jerk and speed drop.        |
+| `stationary_impact`  |              boolean | Collision condition for impacts while the robot is nearly stationary. |
+| `rotation_collision` |              boolean | Collision condition based on a sudden gyroscope spike.                |
+
+
 ### Goals
 
 The environment can be configured with a 2d positional goal and goal tolerance:
