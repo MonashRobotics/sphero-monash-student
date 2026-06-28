@@ -135,9 +135,9 @@ Again, calibration between the simulator, model, and real robot is key to perfor
 
 [Click here for Lab 2 instructions.](./instructions/Lab2.md)
 
-## Lab 3 - A* Path Planning
+## Lab 3 - Path Planning
 
-In Lab 3, you will discretise the robot’s operating space and investigate A* motion planning in a known environment.
+In Lab 3, you will discretise the robot’s operating space and investigate motion planning in a known environment.
 
 Performance in this task will depend heavily on how well your Lab 2 localisation system worked.
 
