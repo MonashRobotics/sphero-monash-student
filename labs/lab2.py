@@ -28,7 +28,6 @@ def dynamics(state, action):
         y_new = y + speed_new * np.cos(heading_new) * 0.1
         return np.array([x_new, y_new, heading_new, speed_new], dtype=np.float32)
 
-
 ### EKF class to track odometry and perform state estimation for the Sphero robot
 # Complete this class to implement the EKF algorithm for state estimation based on your dynamics and measurement models.
 

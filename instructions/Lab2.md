@@ -26,7 +26,7 @@ The base lab2 file is configured for robot teleoperation to allow you to test th
 
 ## Automark assessment
 
-The automarker reads a CSV log from `logs/lab2.csv`.
+The automarker reads a CSV log from `studentid_lab2.csv`.
 
 ### Required CSV columns
 

@@ -20,7 +20,7 @@ Submission requirements:
 - For this lab, you will be evaluated on the final positioning accuracy of the robot (important for the real world demo), and how closely the simulator states match the real robot recordings.
 
 
-The automarker reads a CSV log from `lab1.csv`.
+The automarker reads a CSV log from `studentid_lab1.csv`.
 
 ### Required CSV columns
 
