@@ -209,7 +209,10 @@ def main(sim_only=False):
 
             env.render()
 
-            time.sleep(0.01)  # Small delay to prevent busy-waiting
+            if robot_env is not None:
+                time.sleep(0.01)  # Small delay to prevent busy-waiting
+            else:
+                time.sleep(0.1)  # Small delay to prevent busy-waiting in sim-only mode
 
 
 if __name__ == "__main__":
