@@ -180,7 +180,7 @@ python -m pip install --upgrade pip
 pip install -e .
 ```
 
-If you want the extra teaching and notebook dependencies from `requirements.txt`, install them as well:
+Install the dependencies from `requirements.txt`:
 
 ```bash
 pip install -r requirements.txt
