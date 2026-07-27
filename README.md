@@ -28,7 +28,7 @@ action = [speed, heading_angle]
 | Index | Variable        | Description           |
 | ----: | --------------- | --------------------- |
 |   `0` | `speed`         | Desired robot speed   |
-|   `1` | `heading_angle` | Desired heading angle |
+|   `1` | `turn_rate_cmd` | Desired robot turning rate |
 
 ### Observation Space
 
